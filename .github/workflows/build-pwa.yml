@@ -1,0 +1,88 @@
+name: Build Self-Care Cards PWA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Validate and package the PWA
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate card data and PWA files
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path(".")
+          required = [
+              "index.html",
+              "cards.json",
+              "source-decks.json",
+              "manifest.webmanifest",
+              "sw.js",
+              "icon.svg",
+          ]
+          missing = [name for name in required if not (root / name).is_file()]
+          if missing:
+              raise SystemExit(f"Missing required PWA files: {', '.join(missing)}")
+
+          cards = json.loads((root / "cards.json").read_text(encoding="utf-8"))
+          decks = json.loads((root / "source-decks.json").read_text(encoding="utf-8"))
+          manifest = json.loads((root / "manifest.webmanifest").read_text(encoding="utf-8"))
+
+          if len(cards) != 100:
+              raise SystemExit(f"Expected 100 core cards, found {len(cards)}")
+          if len(decks) != 9:
+              raise SystemExit(f"Expected 9 source decks, found {len(decks)}")
+
+          source_count = sum(len(deck.get("cards", [])) for deck in decks)
+          if source_count != 66:
+              raise SystemExit(f"Expected 66 source prompts, found {source_count}")
+
+          for deck in decks:
+              if not deck.get("title") or not deck.get("author") or not deck.get("source", "").startswith("https://"):
+                  raise SystemExit(f"Incomplete source credit in deck: {deck.get('id', 'unknown')}")
+              for card in deck.get("cards", []):
+                  if not card.get("prompt", "").strip():
+                      raise SystemExit(f"Blank source prompt in deck: {deck['id']}")
+
+          if manifest.get("display") != "standalone":
+              raise SystemExit("PWA manifest must use standalone display mode")
+          if "source-decks.json" not in (root / "sw.js").read_text(encoding="utf-8"):
+              raise SystemExit("Offline cache is missing source-decks.json")
+
+          print(f"Validated {len(cards)} core cards and {source_count} credited source prompts across {len(decks)} decks.")
+          PY
+
+      - name: Assemble the installable PWA bundle
+        run: |
+          set -euo pipefail
+          mkdir -p build/self-care-cards-pwa
+          cp index.html cards.json source-decks.json manifest.webmanifest sw.js icon.svg build/self-care-cards-pwa/
+          cd build
+          zip -qr self-care-cards-pwa.zip self-care-cards-pwa
+          echo "## Self-Care Cards PWA" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          echo "- Build type: static Progressive Web App (PWA), not a signed iOS IPA." >> "$GITHUB_STEP_SUMMARY"
+          echo "- Core cards: 100" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Credited source decks: 9 (66 prompts)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Bundle: `self-care-cards-pwa.zip`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload PWA bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-care-cards-pwa
+          path: build/self-care-cards-pwa.zip
+          if-no-files-found: error
+          retention-days: 30
