@@ -103,16 +103,22 @@ final class DeckStore: ObservableObject {
     @Published private(set) var sourceDecks: [SourceDeck] = []
     @Published var savedIDs: Set<String>
     @Published private(set) var loadError: String?
+    @Published private(set) var sourceDecksLoadError: String?
 
     init() {
         savedIDs = Set(UserDefaults.standard.stringArray(forKey: "savedCardIDs") ?? [])
         do {
             let core: [CoreCard] = try Self.load("cards")
-            let decks: [SourceDeck] = try Self.load("source-decks")
             coreCards = core.map { CardItem(core: $0) }
-            sourceDecks = decks
         } catch {
-            loadError = "The card collection could not be opened. Please restart the app."
+            NSLog("Self-Care Cards: could not load card collection: %@", String(describing: error))
+            loadError = "The card data is missing or damaged in this app build. Install the latest build to restore the collection."
+        }
+        do {
+            sourceDecks = try Self.load("source-decks")
+        } catch {
+            NSLog("Self-Care Cards: could not load source decks: %@", String(describing: error))
+            sourceDecksLoadError = "The source decks are missing or damaged in this app build. Install the latest build to restore them."
         }
     }
 

@@ -182,26 +182,36 @@ struct SourceDecksScreen: View {
     @EnvironmentObject private var store: DeckStore
 
     var body: some View {
-        List(store.sourceDecks) { deck in
-            NavigationLink {
-                SourceDeckDetailScreen(deck: deck)
-            } label: {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(deck.title)
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundStyle(AppPalette.ink)
-                    Text("\(deck.area) · \(deck.cards.count) prompts")
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundStyle(AppPalette.muted)
-                    Text(deck.author)
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundStyle(AppPalette.sageDark)
+        Group {
+            if store.sourceDecks.isEmpty {
+                EmptyState(
+                    title: "No decks loaded",
+                    message: store.sourceDecksLoadError ?? "No source decks are available right now."
+                )
+                .padding(20)
+            } else {
+                List(store.sourceDecks) { deck in
+                    NavigationLink {
+                        SourceDeckDetailScreen(deck: deck)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(deck.title)
+                                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                .foregroundStyle(AppPalette.ink)
+                            Text("\(deck.area) · \(deck.cards.count) prompts")
+                                .font(.system(size: 13, design: .rounded))
+                                .foregroundStyle(AppPalette.muted)
+                            Text(deck.author)
+                                .font(.system(size: 13, design: .rounded))
+                                .foregroundStyle(AppPalette.sageDark)
+                        }
+                        .padding(.vertical, 5)
+                    }
+                    .listRowBackground(AppPalette.card)
                 }
-                .padding(.vertical, 5)
+                .scrollContentBackground(.hidden)
             }
-            .listRowBackground(AppPalette.card)
         }
-        .scrollContentBackground(.hidden)
         .background(AppPalette.paper)
         .navigationTitle("Source decks")
     }
@@ -314,6 +324,10 @@ struct CardRow: View {
 
 struct CardPanel: View {
     let card: CardItem
+    @ScaledMetric(relativeTo: .title) private var titleSize: CGFloat = 25
+    @ScaledMetric(relativeTo: .body) private var promptSize: CGFloat = 18
+    @ScaledMetric(relativeTo: .body) private var reflectionSize: CGFloat = 16
+    @ScaledMetric(relativeTo: .body) private var smallSize: CGFloat = 15
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -322,19 +336,23 @@ struct CardPanel: View {
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .tracking(1.1)
                     .foregroundStyle(AppPalette.sage)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
                 Spacer(minLength: 4)
                 Text(card.id.hasPrefix("source:") ? "SOURCE" : card.id)
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundStyle(AppPalette.muted)
+                    .fixedSize()
             }
 
             Text(card.title)
-                .font(.system(size: 25, weight: .semibold, design: .rounded))
+                .font(.system(size: titleSize, weight: .semibold, design: .rounded))
                 .foregroundStyle(AppPalette.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(card.prompt)
-                .font(.system(size: 18, weight: .regular, design: .rounded))
+                .font(.system(size: promptSize, weight: .regular, design: .rounded))
                 .lineSpacing(5)
                 .foregroundStyle(AppPalette.ink)
                 .fixedSize(horizontal: false, vertical: true)
@@ -346,7 +364,7 @@ struct CardPanel: View {
                         .tracking(1)
                         .foregroundStyle(AppPalette.sage)
                     Text(card.reflection)
-                        .font(.system(size: 16, weight: .regular, design: .rounded))
+                        .font(.system(size: reflectionSize, weight: .regular, design: .rounded))
                         .italic()
                         .lineSpacing(3)
                         .foregroundStyle(AppPalette.muted)
@@ -364,7 +382,7 @@ struct CardPanel: View {
                         .tracking(1)
                         .foregroundStyle(AppPalette.sageDark)
                     Text(card.small)
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .font(.system(size: smallSize, weight: .medium, design: .rounded))
                         .lineSpacing(3)
                         .foregroundStyle(AppPalette.ink)
                         .fixedSize(horizontal: false, vertical: true)

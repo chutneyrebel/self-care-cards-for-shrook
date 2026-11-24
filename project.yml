@@ -9,10 +9,12 @@ targets:
     platform: iOS
     sources:
       - path: ios/SelfCareCards/Sources
-    resources:
       - path: cards.json
+        buildPhase: resources
       - path: source-decks.json
+        buildPhase: resources
       - path: ios/SelfCareCards/Assets.xcassets
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chutneyrebel.selfcarecards

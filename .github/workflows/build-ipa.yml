@@ -55,6 +55,29 @@ jobs:
             CODE_SIGN_IDENTITY='' \
             build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
 
+      - name: Verify bundled card content
+        run: |
+          set -euo pipefail
+          APP_PATH="$RUNNER_TEMP/SelfCareCardsDerivedData/Build/Products/Release-iphoneos/SelfCareCards.app"
+          test -s "$APP_PATH/Assets.car"
+          python3 - "$APP_PATH" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          app = pathlib.Path(sys.argv[1])
+          expectations = {"cards.json": 100, "source-decks.json": 9}
+          for filename, expected_count in expectations.items():
+              path = app / filename
+              if not path.is_file():
+                  raise SystemExit(f"Missing app resource: {filename}")
+              with path.open(encoding="utf-8") as resource:
+                  data = json.load(resource)
+              if not isinstance(data, list) or len(data) != expected_count:
+                  raise SystemExit(f"Unexpected data in {filename}: expected {expected_count} entries")
+              print(f"Verified {filename}: {len(data)} entries")
+          PY
+
       - name: Package IPA
         run: |
           set -euo pipefail
