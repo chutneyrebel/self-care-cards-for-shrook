@@ -14,6 +14,14 @@ Collections: Dopamine Farming, NeuroScouts Quests, Real Life NeuroScouts, Autist
 
 Serve the repository root over HTTPS or localhost. Opening `index.html` as a `file://` URL will not allow the PWA service worker to install.
 
+## iOS app build
+
+The repository also contains a native SwiftUI iOS app. GitHub Actions builds a device-architecture `.ipa` when app or card data changes, and the artifact is available from the **Build Self-Care Cards IPA** workflow run. The first workflow produces an unsigned IPA; installing it on an iPhone requires Apple signing and provisioning.
+
+The iOS app works offline, keeps saved cards on the device, offers random draws from the 100-card deck, browses all five areas and nine credited source decks, and can share a card image through the iOS share sheet. The Xcode project is generated from `project.yml` with XcodeGen during the workflow.
+
+To run a signed build from Xcode, generate the project with XcodeGen, open `SelfCareCards.xcodeproj`, select an Apple development team in Signing & Capabilities, then build for a connected device.
+
 ## Privacy
 
 Saved cards use this browser's local storage. The app has no account, analytics, or network-backed user data. Source PDFs are linked from Alora Young's official free-tools page; the app includes the selected prompt content and attribution for Shrook's personal use.

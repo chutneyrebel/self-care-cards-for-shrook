@@ -1,0 +1,86 @@
+name: Build Self-Care Cards IPA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cards.json"
+      - "source-decks.json"
+      - "project.yml"
+      - "ios/**"
+      - ".github/workflows/build-ipa.yml"
+  pull_request:
+    paths:
+      - "cards.json"
+      - "source-decks.json"
+      - "project.yml"
+      - "ios/**"
+      - ".github/workflows/build-ipa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compile and package iOS app
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build unsigned iOS app
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project SelfCareCards.xcodeproj \
+            -scheme SelfCareCards \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/SelfCareCardsDerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
+
+      - name: Package IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$RUNNER_TEMP/SelfCareCardsDerivedData/Build/Products/Release-iphoneos/SelfCareCards.app"
+          test -d "$APP_PATH"
+          mkdir -p build/ipa/Payload
+          cp -R "$APP_PATH" build/ipa/Payload/
+          (cd build/ipa && /usr/bin/zip -X -qry "$GITHUB_WORKSPACE/build/SelfCareCards-unsigned.ipa" Payload)
+          {
+            echo "## Self-Care Cards iOS build"
+            echo ""
+            echo "- Artifact: `SelfCareCards-unsigned.ipa`"
+            echo "- Build: unsigned, for device architecture"
+            echo "- Includes: 100 core cards, 9 credited source decks, random draw, saved cards, and shareable card images"
+            echo "- Device installation requires signing and provisioning."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-care-cards-unsigned-ipa
+          path: build/SelfCareCards-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-care-cards-xcodebuild-log
+          path: ${{ runner.temp }}/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7

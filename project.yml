@@ -1,0 +1,23 @@
+name: SelfCareCards
+options:
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+targets:
+  SelfCareCards:
+    type: application
+    platform: iOS
+    sources:
+      - path: ios/SelfCareCards/Sources
+    resources:
+      - path: cards.json
+      - path: source-decks.json
+      - path: ios/SelfCareCards/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.chutneyrebel.selfcarecards
+        INFOPLIST_FILE: ios/SelfCareCards/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
