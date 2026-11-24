@@ -6,7 +6,7 @@ on:
     paths:
       - "cards.json"
       - "source-decks.json"
-      - "jung-quotes.json"
+      - "ios-jung-quotes.json"
       - "jung-reflections.json"
       - "project.yml"
       - "ios/**"
@@ -15,7 +15,7 @@ on:
     paths:
       - "cards.json"
       - "source-decks.json"
-      - "jung-quotes.json"
+      - "ios-jung-quotes.json"
       - "jung-reflections.json"
       - "project.yml"
       - "ios/**"
@@ -70,7 +70,7 @@ jobs:
           import sys
 
           app = pathlib.Path(sys.argv[1])
-          expectations = {"cards.json": 100, "source-decks.json": 9, "jung-quotes.json": 6, "jung-reflections.json": 20}
+          expectations = {"cards.json": 100, "source-decks.json": 9, "ios-jung-quotes.json": 6, "jung-reflections.json": 20}
           for filename, expected_count in expectations.items():
               path = app / filename
               if not path.is_file():
