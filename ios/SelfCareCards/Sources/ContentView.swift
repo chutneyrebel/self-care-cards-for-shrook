@@ -868,6 +868,25 @@ struct AboutScreen: View {
     }
 }
 
+struct ReadingSizeControls: View {
+    @AppStorage("careTextScale") private var scale = 1.0
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Adjust card text to a comfortable size. Your choice stays on this device.")
+            HStack(spacing: 10) {
+                Button { scale = max(0.8, scale - 0.1) } label: { Text("A−").frame(maxWidth: .infinity, minHeight: 42) }
+                    .buttonStyle(.bordered).tint(AppPalette.sage).accessibilityLabel("Decrease card text size")
+                Text("\(Int((scale * 100).rounded()))%")
+                    .font(.system(size: 13, weight: .semibold, design: .monospaced)).foregroundStyle(AppPalette.ink).frame(minWidth: 48)
+                    .accessibilityLabel("Card text size \(Int((scale * 100).rounded())) percent")
+                Button { scale = min(1.4, scale + 0.1) } label: { Text("A+").frame(maxWidth: .infinity, minHeight: 42) }
+                    .buttonStyle(.bordered).tint(AppPalette.sage).accessibilityLabel("Increase card text size")
+                Button("Reset") { scale = 1.0 }.font(.system(size: 13, weight: .medium, design: .rounded)).tint(AppPalette.sage)
+            }
+        }
+    }
+}
+
 struct AboutCard<Content: View>: View {
     let title: String
     let content: Content
