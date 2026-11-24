@@ -151,8 +151,8 @@ final class DeckStore: ObservableObject {
             sourceDecksLoadError = "The source decks are missing or damaged in this app build. Install the latest build to restore them."
         }
         do {
-            let quotes: [JungEntry] = try Self.load("jung-quotes")
-            guard quotes.count == 6 else { throw ContentCountMismatch(file: "jung-quotes.json", expected: 6, actual: quotes.count) }
+            let quotes: [JungEntry] = try Self.load("ios-jung-quotes")
+            guard quotes.count == 6 else { throw ContentCountMismatch(file: "ios-jung-quotes.json", expected: 6, actual: quotes.count) }
             jungQuotes = quotes
         } catch {
             NSLog("Self-Care Cards: could not load Jung quotes: %@", String(describing: error))
