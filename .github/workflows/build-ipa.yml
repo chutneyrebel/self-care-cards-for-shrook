@@ -6,6 +6,7 @@ on:
     paths:
       - "cards.json"
       - "source-decks.json"
+      - "jung-quotes.json"
       - "project.yml"
       - "ios/**"
       - ".github/workflows/build-ipa.yml"
@@ -13,6 +14,7 @@ on:
     paths:
       - "cards.json"
       - "source-decks.json"
+      - "jung-quotes.json"
       - "project.yml"
       - "ios/**"
       - ".github/workflows/build-ipa.yml"
@@ -66,7 +68,7 @@ jobs:
           import sys
 
           app = pathlib.Path(sys.argv[1])
-          expectations = {"cards.json": 100, "source-decks.json": 9}
+          expectations = {"cards.json": 100, "source-decks.json": 9, "jung-quotes.json": 6}
           for filename, expected_count in expectations.items():
               path = app / filename
               if not path.is_file():
@@ -91,7 +93,7 @@ jobs:
             echo ""
             echo "- Artifact: `SelfCareCards-unsigned.ipa`"
             echo "- Build: unsigned, for device architecture"
-            echo "- Includes: 100 core cards, 9 credited source decks, random draw, saved cards, and shareable card images"
+            echo "- Includes: 100 core cards, 9 credited reference collections, 6 cited Jung quotes, random draw, saved cards, and shareable images"
             echo "- Device installation requires signing and provisioning."
           } >> "$GITHUB_STEP_SUMMARY"
 

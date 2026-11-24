@@ -13,6 +13,8 @@ targets:
         buildPhase: resources
       - path: source-decks.json
         buildPhase: resources
+      - path: jung-quotes.json
+        buildPhase: resources
       - path: ios/SelfCareCards/Assets.xcassets
         buildPhase: resources
     settings:

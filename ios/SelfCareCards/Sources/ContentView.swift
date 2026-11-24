@@ -8,11 +8,11 @@ struct RootView: View {
             NavigationStack { DrawScreen() }
                 .tabItem { Label("Draw", systemImage: "rectangle.stack") }
             NavigationStack { BrowseScreen() }
-                .tabItem { Label("Areas", systemImage: "square.grid.2x2") }
+                .tabItem { Label("Explore", systemImage: "square.grid.2x2") }
+            NavigationStack { JungQuotesScreen() }
+                .tabItem { Label("Jung", systemImage: "sparkle") }
             NavigationStack { SavedScreen() }
                 .tabItem { Label("Saved", systemImage: "bookmark") }
-            NavigationStack { SourceDecksScreen() }
-                .tabItem { Label("Decks", systemImage: "books.vertical") }
             NavigationStack { AboutScreen() }
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
@@ -42,6 +42,10 @@ struct DrawScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 VStack(alignment: .leading, spacing: 6) {
+                    Text("SHROOK · CARE CARDS")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .tracking(1.5)
+                        .foregroundStyle(AppPalette.sage)
                     Text("A softer pause")
                         .font(.system(size: 29, weight: .semibold, design: .rounded))
                         .foregroundStyle(AppPalette.ink)
@@ -108,6 +112,8 @@ struct DrawScreen: View {
 }
 
 struct BrowseScreen: View {
+    @EnvironmentObject private var store: DeckStore
+
     var body: some View {
         List {
             Section {
@@ -123,10 +129,139 @@ struct BrowseScreen: View {
                 Text("Choose what fits this moment")
                     .textCase(nil)
             }
+
+            Section {
+                if store.sourceDecks.isEmpty {
+                    Text(store.sourceDecksLoadError ?? "Optional reference collections are unavailable right now.")
+                        .foregroundStyle(AppPalette.muted)
+                        .listRowBackground(AppPalette.card)
+                } else {
+                    ForEach(store.sourceDecks) { deck in
+                        NavigationLink {
+                            SourceDeckDetailScreen(deck: deck)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(deck.title)
+                                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(AppPalette.ink)
+                                Text("\(deck.area) · \(deck.cards.count) prompts")
+                                    .font(.system(size: 13, design: .rounded))
+                                    .foregroundStyle(AppPalette.muted)
+                                Text(deck.author)
+                                    .font(.system(size: 13, design: .rounded))
+                                    .foregroundStyle(AppPalette.sage)
+                            }
+                            .padding(.vertical, 5)
+                        }
+                        .listRowBackground(AppPalette.card)
+                    }
+                }
+            } header: {
+                Text("Optional reference collections")
+                    .textCase(nil)
+            } footer: {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Selected prompts are adapted with permission from tools by Alora Young / NeuroScouts. Each collection links to its source.")
+                    if let url = URL(string: "https://alorayoung.org/free-tools.html#decks") {
+                        Link("Open the original free-tools page", destination: url)
+                    }
+                }
+            }
         }
         .scrollContentBackground(.hidden)
         .background(AppPalette.paper)
-        .navigationTitle("Browse areas")
+        .navigationTitle("Explore")
+    }
+}
+
+struct JungQuotesScreen: View {
+    @EnvironmentObject private var store: DeckStore
+    @State private var selectedQuoteID: String?
+
+    private var currentQuote: JungQuote? {
+        if let selectedQuoteID, let quote = store.jungQuotes.first(where: { $0.id == selectedQuoteID }) {
+            return quote
+        }
+        return store.jungQuotes.first
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("JUNG / RANDOM QUOTE")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .tracking(2)
+                    .foregroundStyle(AppPalette.sage)
+                Text("A thought to sit with")
+                    .font(.system(.title2, design: .rounded, weight: .semibold))
+                    .foregroundStyle(AppPalette.ink)
+                Text("Take what fits. Leave the rest. You can draw another quote whenever you want.")
+                    .font(.body)
+                    .foregroundStyle(AppPalette.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let quote = currentQuote {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("“")
+                            .font(.system(size: 54, weight: .medium, design: .serif))
+                            .foregroundStyle(AppPalette.sage)
+                            .accessibilityHidden(true)
+                        Text(quote.text)
+                            .font(.system(.title2, design: .rounded, weight: .medium))
+                            .lineSpacing(5)
+                            .foregroundStyle(AppPalette.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Rectangle()
+                            .fill(AppPalette.line)
+                            .frame(height: 1)
+                        Text(quote.source)
+                            .font(.footnote)
+                            .foregroundStyle(AppPalette.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(22)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(AppPalette.card, in: RoundedRectangle(cornerRadius: 22))
+                    .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppPalette.line, lineWidth: 1))
+
+                    HStack(spacing: 12) {
+                        Button(action: drawAnother) {
+                            Label("Another quote", systemImage: "arrow.clockwise")
+                                .frame(maxWidth: .infinity, minHeight: 48)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(AppPalette.sage)
+                        .foregroundStyle(AppPalette.paper)
+
+                        QuoteShareButton(quote: quote)
+                    }
+                } else {
+                    EmptyState(
+                        title: "No quotes loaded",
+                        message: store.jungQuotesLoadError ?? "The quote collection is not available in this build."
+                    )
+                    .padding(.top, 8)
+                }
+
+                Text("These excerpts are for reflection, not instructions, diagnoses, or clinical advice.")
+                    .font(.footnote)
+                    .foregroundStyle(AppPalette.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(20)
+            .frame(maxWidth: 620, alignment: .leading)
+            .frame(maxWidth: .infinity)
+        }
+        .background(AppPalette.paper.ignoresSafeArea())
+        .navigationTitle("Jung")
+        .onAppear {
+            if selectedQuoteID == nil { selectedQuoteID = store.jungQuotes.randomElement()?.id }
+        }
+    }
+
+    private func drawAnother() {
+        let alternatives = store.jungQuotes.filter { $0.id != currentQuote?.id }
+        selectedQuoteID = (alternatives.isEmpty ? store.jungQuotes : alternatives).randomElement()?.id
     }
 }
 
@@ -175,45 +310,6 @@ struct AreaCardsScreen: View {
         .background(AppPalette.paper)
         .navigationTitle(area.name.localizedCapitalized)
         .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct SourceDecksScreen: View {
-    @EnvironmentObject private var store: DeckStore
-
-    var body: some View {
-        Group {
-            if store.sourceDecks.isEmpty {
-                EmptyState(
-                    title: "No decks loaded",
-                    message: store.sourceDecksLoadError ?? "No source decks are available right now."
-                )
-                .padding(20)
-            } else {
-                List(store.sourceDecks) { deck in
-                    NavigationLink {
-                        SourceDeckDetailScreen(deck: deck)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(deck.title)
-                                .font(.system(size: 17, weight: .semibold, design: .rounded))
-                                .foregroundStyle(AppPalette.ink)
-                            Text("\(deck.area) · \(deck.cards.count) prompts")
-                                .font(.system(size: 13, design: .rounded))
-                                .foregroundStyle(AppPalette.muted)
-                            Text(deck.author)
-                                .font(.system(size: 13, design: .rounded))
-                                .foregroundStyle(AppPalette.sageDark)
-                        }
-                        .padding(.vertical, 5)
-                    }
-                    .listRowBackground(AppPalette.card)
-                }
-                .scrollContentBackground(.hidden)
-            }
-        }
-        .background(AppPalette.paper)
-        .navigationTitle("Source decks")
     }
 }
 
@@ -430,6 +526,64 @@ struct SaveCardButton: View {
     }
 }
 
+struct QuoteShareButton: View {
+    let quote: JungQuote
+    @State private var showingShare = false
+    @State private var activityItems: [Any] = []
+
+    var body: some View {
+        Button(action: prepareShare) {
+            Label("Share", systemImage: "square.and.arrow.up")
+                .frame(maxWidth: .infinity, minHeight: 48)
+        }
+        .buttonStyle(.bordered)
+        .tint(AppPalette.sage)
+        .sheet(isPresented: $showingShare) {
+            ActivityView(activityItems: activityItems)
+                .presentationDetents([.medium, .large])
+        }
+    }
+
+    private func prepareShare() {
+        let renderer = ImageRenderer(content: QuoteShareArtwork(quote: quote))
+        renderer.scale = 3
+        activityItems = [quote.shareText]
+        if let image = renderer.uiImage { activityItems.insert(image, at: 0) }
+        showingShare = true
+    }
+}
+
+struct QuoteShareArtwork: View {
+    let quote: JungQuote
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Text("SHROOK · JUNG QUOTES")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .tracking(1.5)
+                .foregroundStyle(AppPalette.sage)
+            Text("“")
+                .font(.system(size: 46, weight: .medium, design: .serif))
+                .foregroundStyle(AppPalette.sage)
+            Text(quote.text)
+                .font(.system(size: 21, weight: .medium, design: .rounded))
+                .lineSpacing(4)
+                .foregroundStyle(AppPalette.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Rectangle()
+                .fill(AppPalette.line)
+                .frame(height: 1)
+            Text(quote.source)
+                .font(.system(size: 11, design: .rounded))
+                .foregroundStyle(AppPalette.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(28)
+        .frame(width: 360, alignment: .leading)
+        .background(AppPalette.paper)
+    }
+}
+
 struct ShareCardButton: View {
     let card: CardItem
     @State private var showingShare = false
@@ -462,8 +616,8 @@ struct ShareCardArtwork: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("SELF-CARE CARDS")
-                .font(.system(size: 12, weight: .bold, design: .rounded))
+            Text("SHROOK · CARE CARDS")
+                .font(.system(size: 12, weight: .bold, design: .monospaced))
                 .tracking(1.5)
                 .foregroundStyle(AppPalette.sage)
             Text(card.category.uppercased())
@@ -558,22 +712,16 @@ struct AboutScreen: View {
                     Text("Individuation can mean noticing what fits your own life. Persona can describe roles that help us navigate. Shadow is used here for overlooked feelings or strengths, not as a label for something bad.")
                     Text("These are reflective prompts, not a fixed interpretation, diagnosis, or substitute for clinical care. You do not need to disclose or dig into painful memories.")
                 }
-                AboutCard(title: "A personal fit") {
-                    Text("“The shoe that fits one person pinches another; there is no recipe for living that suits all cases.”")
-                        .italic()
-                    Text("C.G. Jung, Modern Man in Search of a Soul, “Problems of Modern Psychotherapy” (1933).")
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundStyle(AppPalette.muted)
-                }
-                AboutCard(title: "Notice, don't force") {
-                    Text("“One does not become enlightened by imagining figures of light, but by making the darkness conscious.”")
-                        .italic()
-                    Text("C.G. Jung, “The Philosophical Tree,” Collected Works, vol. 13, par. 335.")
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundStyle(AppPalette.muted)
+                AboutCard(title: "About the Jung quotes") {
+                    Text("The Jung section shows one short, source-cited excerpt at a time. Sharing a quote includes its book or essay reference.")
                 }
                 AboutCard(title: "Credit and privacy") {
-                    Text("The nine optional source decks are credited to Alora Young / NeuroScouts and link back to their original PDFs. The Care Quest PDF cover also credits SEHTLO WEBS MD.")
+                    Text("Optional reference prompts are adapted with permission from tools by Alora Young / NeuroScouts. Each collection links back to its source. The Care Quest PDF cover also credits SEHTLO WEBS MD.")
+                    if let url = URL(string: "https://alorayoung.org/free-tools.html#decks") {
+                        Link("Visit the original free-tools page", destination: url)
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .tint(AppPalette.sage)
+                    }
                     Text("Your saved cards stay on this device. The app does not use an account or send your saved-card list anywhere.")
                 }
             }

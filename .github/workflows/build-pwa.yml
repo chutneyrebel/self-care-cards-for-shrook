@@ -29,6 +29,7 @@ jobs:
               "index.html",
               "cards.json",
               "source-decks.json",
+              "jung-quotes.json",
               "manifest.webmanifest",
               "sw.js",
               "icon.svg",
@@ -39,12 +40,18 @@ jobs:
 
           cards = json.loads((root / "cards.json").read_text(encoding="utf-8"))
           decks = json.loads((root / "source-decks.json").read_text(encoding="utf-8"))
+          quotes = json.loads((root / "jung-quotes.json").read_text(encoding="utf-8"))
           manifest = json.loads((root / "manifest.webmanifest").read_text(encoding="utf-8"))
 
           if len(cards) != 100:
               raise SystemExit(f"Expected 100 core cards, found {len(cards)}")
           if len(decks) != 9:
-              raise SystemExit(f"Expected 9 source decks, found {len(decks)}")
+              raise SystemExit(f"Expected 9 reference collections, found {len(decks)}")
+          if len(quotes) != 6:
+              raise SystemExit(f"Expected 6 cited Jung quotes, found {len(quotes)}")
+          for quote in quotes:
+              if not quote.get("text", "").strip() or not quote.get("source", "").strip():
+                  raise SystemExit(f"Incomplete quote citation: {quote.get('id', 'unknown')}")
 
           source_count = sum(len(deck.get("cards", [])) for deck in decks)
           if source_count != 66:
@@ -59,24 +66,27 @@ jobs:
 
           if manifest.get("display") != "standalone":
               raise SystemExit("PWA manifest must use standalone display mode")
-          if "source-decks.json" not in (root / "sw.js").read_text(encoding="utf-8"):
-              raise SystemExit("Offline cache is missing source-decks.json")
+          sw = (root / "sw.js").read_text(encoding="utf-8")
+          for filename in ("source-decks.json", "jung-quotes.json"):
+              if filename not in sw:
+                  raise SystemExit(f"Offline cache is missing {filename}")
 
-          print(f"Validated {len(cards)} core cards and {source_count} credited source prompts across {len(decks)} decks.")
+          print(f"Validated {len(cards)} core cards, {source_count} credited reference prompts across {len(decks)} collections, and {len(quotes)} cited Jung quotes.")
           PY
 
       - name: Assemble the installable PWA bundle
         run: |
           set -euo pipefail
           mkdir -p build/self-care-cards-pwa
-          cp index.html cards.json source-decks.json manifest.webmanifest sw.js icon.svg build/self-care-cards-pwa/
+          cp index.html cards.json source-decks.json jung-quotes.json manifest.webmanifest sw.js icon.svg build/self-care-cards-pwa/
           cd build
           zip -qr self-care-cards-pwa.zip self-care-cards-pwa
           echo "## Self-Care Cards PWA" >> "$GITHUB_STEP_SUMMARY"
           echo >> "$GITHUB_STEP_SUMMARY"
           echo "- Build type: static Progressive Web App (PWA), not a signed iOS IPA." >> "$GITHUB_STEP_SUMMARY"
           echo "- Core cards: 100" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Credited source decks: 9 (66 prompts)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Credited reference collections: 9 (66 prompts)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Source-cited Jung quotes: 6" >> "$GITHUB_STEP_SUMMARY"
           echo "- Bundle: `self-care-cards-pwa.zip`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload PWA bundle

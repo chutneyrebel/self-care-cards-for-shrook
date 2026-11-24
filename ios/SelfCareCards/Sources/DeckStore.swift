@@ -25,6 +25,16 @@ struct SourceDeck: Codable, Hashable, Identifiable {
     let cards: [SourcePrompt]
 }
 
+struct JungQuote: Codable, Hashable, Identifiable {
+    let id: String
+    let text: String
+    let source: String
+
+    var shareText: String {
+        "“\(text)”\n\n\(source)\n\nSHROOK · Jung Quotes"
+    }
+}
+
 struct CardItem: Hashable, Identifiable {
     let id: String
     let category: String
@@ -65,7 +75,7 @@ struct CardItem: Hashable, Identifiable {
             let link = sourceURL.map { "\n\($0)" } ?? ""
             parts.append("Adapted from \(sourceCredit)\(link)")
         }
-        parts.append("Self-Care Cards · \(category) · \(id)")
+        parts.append("SHROOK · Self-Care Cards · \(category) · \(id)")
         return parts.joined(separator: "\n\n")
     }
 }
@@ -87,23 +97,25 @@ struct AreaInfo: Hashable, Identifiable {
 }
 
 enum AppPalette {
-    static let paper = Color(red: 0.965, green: 0.965, blue: 0.941)
-    static let card = Color(red: 1.000, green: 0.998, blue: 0.980)
-    static let sage = Color(red: 0.322, green: 0.420, blue: 0.380)
-    static let sageDark = Color(red: 0.245, green: 0.345, blue: 0.300)
-    static let mist = Color(red: 0.910, green: 0.937, blue: 0.914)
-    static let ink = Color(red: 0.150, green: 0.207, blue: 0.184)
-    static let muted = Color(red: 0.345, green: 0.404, blue: 0.373)
-    static let line = Color(red: 0.835, green: 0.867, blue: 0.839)
+    static let paper = Color(red: 0.063, green: 0.067, blue: 0.055)
+    static let card = Color(red: 0.098, green: 0.106, blue: 0.082)
+    static let sage = Color(red: 0.890, green: 0.988, blue: 0.282)
+    static let sageDark = Color(red: 0.784, green: 0.894, blue: 0.231)
+    static let mist = Color(red: 0.133, green: 0.141, blue: 0.110)
+    static let ink = Color(red: 0.949, green: 0.953, blue: 0.918)
+    static let muted = Color(red: 0.678, green: 0.698, blue: 0.643)
+    static let line = Color(red: 0.235, green: 0.251, blue: 0.200)
 }
 
 @MainActor
 final class DeckStore: ObservableObject {
     @Published private(set) var coreCards: [CardItem] = []
     @Published private(set) var sourceDecks: [SourceDeck] = []
+    @Published private(set) var jungQuotes: [JungQuote] = []
     @Published var savedIDs: Set<String>
     @Published private(set) var loadError: String?
     @Published private(set) var sourceDecksLoadError: String?
+    @Published private(set) var jungQuotesLoadError: String?
 
     init() {
         savedIDs = Set(UserDefaults.standard.stringArray(forKey: "savedCardIDs") ?? [])
@@ -119,6 +131,12 @@ final class DeckStore: ObservableObject {
         } catch {
             NSLog("Self-Care Cards: could not load source decks: %@", String(describing: error))
             sourceDecksLoadError = "The source decks are missing or damaged in this app build. Install the latest build to restore them."
+        }
+        do {
+            jungQuotes = try Self.load("jung-quotes")
+        } catch {
+            NSLog("Self-Care Cards: could not load Jung quotes: %@", String(describing: error))
+            jungQuotesLoadError = "The quote collection is missing or damaged in this app build. Install the latest build to restore it."
         }
     }
 
