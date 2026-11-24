@@ -4,7 +4,7 @@ import CoreText
 
 private enum BundledFonts {
     static let display = "ArchivoBlack-Regular"
-    static let body = "SpaceGrotesk[wght]"
+    static let body = "SpaceGrotesk-Light"
     static let registration: Void = {
         register(name: "ArchivoBlack", extension: "b64")
         register(name: "SpaceGroteskVariable", extension: "b64")
@@ -631,12 +631,12 @@ struct CardPanel: View {
                 Spacer(minLength: 4)
                 Text(card.id.hasPrefix("source:") ? "SOURCE" : card.id).font(.system(size: 12, weight: .medium, design: .rounded)).foregroundStyle(AppPalette.muted).fixedSize()
             }
-            Text(card.title).font(.custom(BundledFonts.body, size: 25 * scale, relativeTo: .title)).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
-            Text(card.prompt).font(.custom(BundledFonts.body, size: 18 * scale, relativeTo: .body)).lineSpacing(5).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
+            Text(card.title).font(.custom(BundledFonts.body, size: 25 * scale, relativeTo: .title).weight(.semibold)).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
+            Text(card.prompt).font(.custom(BundledFonts.body, size: 18 * scale, relativeTo: .body).weight(.regular)).lineSpacing(5).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
 
             if !card.reflection.isEmpty {
                 DisclosureGroup {
-                    Text(card.reflection).font(.custom(BundledFonts.body, size: 16 * scale, relativeTo: .body)).italic().lineSpacing(3)
+                    Text(card.reflection).font(.custom(BundledFonts.body, size: 16 * scale, relativeTo: .body).weight(.regular)).italic().lineSpacing(3)
                         .foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true).padding(.top, 6)
                 } label: {
                     Text("OPTIONAL REFLECTION").font(.system(size: 11, weight: .bold, design: .rounded)).tracking(1).foregroundStyle(AppPalette.sage)
@@ -647,7 +647,7 @@ struct CardPanel: View {
             if !card.small.isEmpty {
                 VStack(alignment: .leading, spacing: 7) {
                     Text("SMALLER VERSION").font(.system(size: 11, weight: .bold, design: .rounded)).tracking(1).foregroundStyle(AppPalette.sageDark)
-                    Text(card.small).font(.custom(BundledFonts.body, size: 15 * scale, relativeTo: .body)).lineSpacing(3).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
+                    Text(card.small).font(.custom(BundledFonts.body, size: 15 * scale, relativeTo: .body).weight(.medium)).lineSpacing(3).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
                 }.padding(15).frame(maxWidth: .infinity, alignment: .leading).background(AppPalette.mist, in: RoundedRectangle(cornerRadius: 16))
             }
             if let sourceCredit = card.sourceCredit {
