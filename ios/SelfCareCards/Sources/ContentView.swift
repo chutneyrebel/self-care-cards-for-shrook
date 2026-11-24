@@ -1,5 +1,33 @@
 import SwiftUI
 
+struct AppBackdrop: View {
+    var body: some View {
+        ZStack {
+            AppPalette.paper.ignoresSafeArea()
+            Canvas { context, size in
+                var grid = Path()
+                for x in stride(from: CGFloat.zero, through: size.width, by: 28) {
+                    grid.move(to: CGPoint(x: x, y: 0))
+                    grid.addLine(to: CGPoint(x: x, y: size.height))
+                }
+                for y in stride(from: CGFloat.zero, through: size.height, by: 28) {
+                    grid.move(to: CGPoint(x: 0, y: y))
+                    grid.addLine(to: CGPoint(x: size.width, y: y))
+                }
+                context.stroke(grid, with: .color(.white.opacity(0.035)), lineWidth: 0.5)
+            }
+            RadialGradient(
+                colors: [AppPalette.sage.opacity(0.09), .clear],
+                center: .top,
+                startRadius: 0,
+                endRadius: 420
+            )
+            .allowsHitTesting(false)
+        }
+        .accessibilityHidden(true)
+    }
+}
+
 struct RootView: View {
     @StateObject private var store = DeckStore()
 
@@ -20,18 +48,53 @@ struct RootView: View {
         .tint(AppPalette.sage)
         .toolbarBackground(AppPalette.paper, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
-        .background(AppPalette.paper)
+        .background(AppBackdrop())
+    }
+}
+
+struct PWAFilterChip: View {
+    let title: String
+    let isSelected: Bool
+
+    var body: some View {
+        Text(title)
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .lineLimit(1)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .foregroundStyle(isSelected ? AppPalette.paper : AppPalette.ink)
+            .background(isSelected ? AppPalette.sage : AppPalette.card, in: Capsule())
+            .overlay(Capsule().stroke(isSelected ? AppPalette.sage : AppPalette.line, lineWidth: 1))
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
 struct DrawScreen: View {
     @EnvironmentObject private var store: DeckStore
-    @State private var selectedArea = "All areas"
+    @State private var selectedFilter = "All cards"
     @State private var selectedID: String?
+    @State private var seenIDs = Set<String>()
+
+    private let filterLabels = [
+        "All cards",
+        "Sensory reset",
+        "Low-energy care",
+        "Music + movement",
+        "Thoughts + big feelings",
+        "Social recovery"
+    ]
+
+    private let categoryByFilter = [
+        "Sensory reset": "SENSORY RESET",
+        "Low-energy care": "LOW-ENERGY CARE",
+        "Music + movement": "MUSIC + MOVEMENT",
+        "Thoughts + big feelings": "THOUGHTS + BIG FEELINGS",
+        "Social recovery": "SOCIAL RECOVERY + SELF-ACCEPTANCE"
+    ]
 
     private var availableCards: [CardItem] {
-        guard selectedArea != "All areas" else { return store.coreCards }
-        return store.coreCards.filter { $0.category == selectedArea }
+        guard let category = categoryByFilter[selectedFilter] else { return store.coreCards }
+        return store.coreCards.filter { $0.category == category }
     }
 
     private var selectedCard: CardItem? {
@@ -40,35 +103,60 @@ struct DrawScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("SHROOK · CARE CARDS")
+            VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("A NEURODIVERGENT-FIRST DECK")
                         .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .tracking(1.5)
+                        .tracking(1.7)
                         .foregroundStyle(AppPalette.sage)
-                    Text("A softer pause")
-                        .font(.system(size: 29, weight: .semibold, design: .rounded))
+                    Text("Self-Care Cards")
+                        .font(.system(size: 30, weight: .black, design: .rounded))
+                        .tracking(-0.8)
                         .foregroundStyle(AppPalette.ink)
-                    Text("Take one prompt, adapt it, or leave it for later.")
-                        .font(.system(size: 16, design: .rounded))
+                    Text("One small prompt for this moment. Skip, adapt, or stop whenever you want.")
+                        .font(.system(size: 15, design: .rounded))
+                        .lineSpacing(3)
                         .foregroundStyle(AppPalette.muted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Menu {
-                    Button("All areas") { selectedArea = "All areas" }
-                    ForEach(AreaInfo.all) { area in
-                        Button(area.name.localizedCapitalized) { selectedArea = area.name }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(filterLabels, id: \.self) { label in
+                            Button {
+                                selectedFilter = label
+                                drawNext()
+                            } label: {
+                                PWAFilterChip(title: label, isSelected: selectedFilter == label)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Filter: \(label)")
+                            .accessibilityAddTraits(selectedFilter == label ? .isSelected : [])
+                        }
                     }
-                } label: {
-                    Label(selectedArea == "All areas" ? "All five areas" : selectedArea.localizedCapitalized,
-                          systemImage: "line.3.horizontal.decrease.circle")
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
-                        .foregroundStyle(AppPalette.sageDark)
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 13)
-                        .background(AppPalette.mist, in: Capsule())
                 }
-                .accessibilityLabel("Choose an area to draw from")
+                .contentMargins(.horizontal, 1, for: .scrollContent)
+                .accessibilityLabel("Choose a card category")
+
+                HStack(spacing: 10) {
+                    Button(action: drawNext) {
+                        Label("Draw a card", systemImage: "arrow.clockwise")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .accessibilityHint("Selects a random card from the chosen category")
+
+                    Button(action: drawNext) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 17, weight: .semibold))
+                            .frame(width: 48, height: 48)
+                            .foregroundStyle(AppPalette.ink)
+                            .background(AppPalette.card, in: RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppPalette.line, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Draw another card")
+                }
 
                 if let card = selectedCard {
                     CardPanel(card: card)
@@ -79,35 +167,37 @@ struct DrawScreen: View {
                 } else if let message = store.loadError {
                     EmptyState(title: "Cards unavailable", message: message)
                 } else {
-                    EmptyState(title: "No cards found", message: "Choose another area and try again.")
+                    EmptyState(title: "No cards found", message: "Choose another category and try again.")
                 }
 
-                Button(action: drawNext) {
-                    Label("Draw a card", systemImage: "arrow.clockwise")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .accessibilityHint("Selects a random card from the chosen area")
-
-                Text("No streaks, scores, or required order.")
-                    .font(.system(size: 13, design: .rounded))
+                Text("100 cards · 20 in each area · no streaks, scores, or required order.")
+                    .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(AppPalette.muted)
                     .frame(maxWidth: .infinity)
+                    .multilineTextAlignment(.center)
             }
-            .padding(20)
+            .padding(.vertical, 18)
+            .frame(maxWidth: 620, alignment: .leading)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 16)
         }
-        .background(AppPalette.paper.ignoresSafeArea())
+        .background(AppBackdrop())
         .navigationTitle("Draw")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { if selectedID == nil { drawNext() } }
-        .onChange(of: selectedArea) { _ in drawNext() }
     }
 
     private func drawNext() {
         let pool = availableCards
         guard !pool.isEmpty else { selectedID = nil; return }
-        let choices = pool.filter { $0.id != selectedID }
-        selectedID = (choices.randomElement() ?? pool.randomElement())?.id
+        var choices = pool.filter { !seenIDs.contains($0.id) }
+        if choices.isEmpty {
+            seenIDs.removeAll()
+            choices = pool
+        }
+        guard let next = choices.randomElement() else { selectedID = nil; return }
+        selectedID = next.id
+        seenIDs.insert(next.id)
     }
 }
 
