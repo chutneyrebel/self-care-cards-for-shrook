@@ -120,7 +120,7 @@ struct CardFocusScreen: View {
             .background(AppBackdrop())
             .navigationTitle("Focus card")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }.tint(AppPalette.sage) } }
+            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { dismiss() }.tint(AppPalette.sage) } }
         }
         .environment(\.colorScheme, .dark)
     }
@@ -220,10 +220,10 @@ struct DrawScreen: View {
                 }.padding(.horizontal, 1).accessibilityLabel("Choose a card category")
 
                 HStack(spacing: 10) {
-                    Button(action: drawNext) {
+                    Button { drawNext() } label: {
                         Label("Draw a card", systemImage: "arrow.clockwise").frame(maxWidth: .infinity)
                     }.buttonStyle(PrimaryButtonStyle()).accessibilityHint("Selects a random card from the chosen category")
-                    Button(action: drawNext) {
+                    Button { drawNext() } label: {
                         Text("Not this one").font(.system(size: 14, weight: .semibold, design: .rounded))
                             .frame(minHeight: 48).padding(.horizontal, 13)
                             .foregroundStyle(AppPalette.ink).background(AppPalette.card, in: RoundedRectangle(cornerRadius: 14))
@@ -285,15 +285,14 @@ struct DrawScreen: View {
         if let selectedID { previousDraws.append((selectedID, selectedFilter, selectedNeed)) }
     }
 
-    private func drawNext(recordPrevious: Bool = true, excluding current: Bool = false) {
+    private func drawNext(recordPrevious: Bool = true) {
         let pool = availableCards
         guard !pool.isEmpty else { selectedID = nil; return }
         if recordPrevious { recordCurrent() }
         var choices = pool.filter { !seenIDs.contains($0.id) }
-        if current, let selectedID { choices.removeAll { $0.id == selectedID } }
         if choices.isEmpty {
             seenIDs.subtract(pool.map(\.id))
-            choices = pool.filter { !current || $0.id != selectedID }
+            choices = pool
         }
         guard let next = choices.randomElement() else { return }
         selectedID = next.id
@@ -504,10 +503,10 @@ struct SourceDeckDetailScreen: View {
                 Text("By \(deck.author)").font(.system(size: 13, design: .rounded)).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
                 if let url = URL(string: deck.source) { Link("Open the original collection", destination: url).font(.system(size: 13, weight: .medium, design: .rounded)).tint(AppPalette.sage) }
                 HStack(spacing: 10) {
-                    Button(action: drawFromDeck) {
+                    Button { drawFromDeck() } label: {
                         Label("Draw from this deck", systemImage: "arrow.clockwise").frame(maxWidth: .infinity, minHeight: 50)
                     }.buttonStyle(PrimaryButtonStyle()).accessibilityHint("Draws one random card from \(deck.title)")
-                    Button(action: drawFromDeck) {
+                    Button { drawFromDeck() } label: {
                         Text("Not this one").font(.system(size: 14, weight: .semibold, design: .rounded)).frame(minHeight: 48).padding(.horizontal, 12)
                             .foregroundStyle(AppPalette.ink).background(AppPalette.card, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(AppPalette.line, lineWidth: 1))
                     }.buttonStyle(.plain).accessibilityLabel("Not this one. Draw another card.")
