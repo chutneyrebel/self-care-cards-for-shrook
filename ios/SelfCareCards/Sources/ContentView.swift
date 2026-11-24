@@ -14,16 +14,17 @@ struct AppBackdrop: View {
                     grid.move(to: CGPoint(x: 0, y: y))
                     grid.addLine(to: CGPoint(x: size.width, y: y))
                 }
-                context.stroke(grid, with: .color(.white.opacity(0.035)), lineWidth: 0.5)
+                context.stroke(grid, with: .color(.white.opacity(0.02)), lineWidth: 0.5)
             }
             RadialGradient(
-                colors: [AppPalette.sage.opacity(0.09), .clear],
+                colors: [AppPalette.sage.opacity(0.06), .clear],
                 center: .top,
                 startRadius: 0,
                 endRadius: 420
             )
             .allowsHitTesting(false)
         }
+        .ignoresSafeArea()
         .accessibilityHidden(true)
     }
 }
@@ -46,6 +47,9 @@ struct RootView: View {
         }
         .environmentObject(store)
         .tint(AppPalette.sage)
+        .environment(\.colorScheme, .dark)
+        .toolbarBackground(AppPalette.paper, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(AppPalette.paper, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .background(AppBackdrop())
@@ -109,7 +113,7 @@ struct DrawScreen: View {
                         .font(.system(size: 11, weight: .bold, design: .monospaced))
                         .tracking(1.7)
                         .foregroundStyle(AppPalette.sage)
-                    Text("Self-Care Cards")
+                    Text("SELF-CARE CARDS")
                         .font(.system(size: 30, weight: .black, design: .rounded))
                         .tracking(-0.8)
                         .foregroundStyle(AppPalette.ink)
@@ -135,7 +139,7 @@ struct DrawScreen: View {
                         }
                     }
                 }
-                .contentMargins(.horizontal, 1, for: .scrollContent)
+                .padding(.horizontal, 1)
                 .accessibilityLabel("Choose a card category")
 
                 HStack(spacing: 10) {
@@ -203,155 +207,107 @@ struct DrawScreen: View {
 
 struct BrowseScreen: View {
     @EnvironmentObject private var store: DeckStore
-
     var body: some View {
-        List {
-            Section {
-                ForEach(AreaInfo.all) { area in
-                    NavigationLink {
-                        AreaCardsScreen(area: area)
-                    } label: {
-                        AreaRow(area: area)
-                    }
-                    .listRowBackground(AppPalette.card)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("SOURCE LIBRARY · \(store.sourceDecks.count) COLLECTIONS").font(.system(size: 11, weight: .bold, design: .monospaced)).tracking(1.7).foregroundStyle(AppPalette.sage)
+                    Text("Explore by collection").font(.system(size: 28, weight: .bold, design: .rounded)).tracking(-0.6).foregroundStyle(AppPalette.ink)
+                    Text("Choose a collection to open its cards. Draw one at a time, and return here whenever you like.")
+                        .font(.system(size: 15, design: .rounded)).lineSpacing(3).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
                 }
-            } header: {
-                Text("Choose what fits this moment")
-                    .textCase(nil)
-            }
-
-            Section {
                 if store.sourceDecks.isEmpty {
-                    Text(store.sourceDecksLoadError ?? "Optional reference collections are unavailable right now.")
-                        .foregroundStyle(AppPalette.muted)
-                        .listRowBackground(AppPalette.card)
+                    EmptyState(title: "Collections unavailable", message: store.sourceDecksLoadError ?? "The optional reference collections are not available in this build.")
                 } else {
-                    ForEach(store.sourceDecks) { deck in
-                        NavigationLink {
-                            SourceDeckDetailScreen(deck: deck)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(deck.title)
-                                    .font(.system(size: 17, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(AppPalette.ink)
-                                Text("\(deck.area) · \(deck.cards.count) prompts")
-                                    .font(.system(size: 13, design: .rounded))
-                                    .foregroundStyle(AppPalette.muted)
-                                Text(deck.author)
-                                    .font(.system(size: 13, design: .rounded))
-                                    .foregroundStyle(AppPalette.sage)
+                    VStack(spacing: 10) {
+                        ForEach(store.sourceDecks) { deck in
+                            NavigationLink {
+                                SourceDeckDetailScreen(deck: deck)
+                            } label: {
+                                HStack(alignment: .center, spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text(deck.title).font(.system(size: 16, weight: .semibold, design: .rounded)).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
+                                        Text("\(deck.area) · \(deck.cards.count) cards").font(.system(size: 12, design: .rounded)).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    Spacer(minLength: 8)
+                                    Text("OPEN ›").font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1).foregroundStyle(AppPalette.sage)
+                                }
+                                .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                                .background(AppPalette.card, in: RoundedRectangle(cornerRadius: 18))
+                                .overlay(RoundedRectangle(cornerRadius: 18).stroke(AppPalette.line, lineWidth: 1))
                             }
-                            .padding(.vertical, 5)
+                            .buttonStyle(.plain).accessibilityLabel("\(deck.title), \(deck.cards.count) cards. Open collection")
                         }
-                        .listRowBackground(AppPalette.card)
                     }
                 }
-            } header: {
-                Text("Optional reference collections")
-                    .textCase(nil)
-            } footer: {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Selected prompts are adapted with permission from tools by Alora Young / NeuroScouts. Each collection links to its source.")
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("SOURCE NOTES").font(.system(size: 11, weight: .bold, design: .monospaced)).tracking(1.5).foregroundStyle(AppPalette.sage)
+                    Text("Some collections are adapted with permission from Alora Young’s NeuroScouts resources. Each draw links back to its original source.")
+                        .font(.system(size: 13, design: .rounded)).lineSpacing(3).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
                     if let url = URL(string: "https://alorayoung.org/free-tools.html#decks") {
-                        Link("Open the original free-tools page", destination: url)
+                        Link("Open the original free-tools page", destination: url).font(.system(size: 13, weight: .medium, design: .rounded)).tint(AppPalette.sage)
                     }
                 }
+                .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                .background(AppPalette.card, in: RoundedRectangle(cornerRadius: 18))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(AppPalette.line, lineWidth: 1))
             }
+            .padding(.vertical, 20).frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity).padding(.horizontal, 20)
         }
-        .scrollContentBackground(.hidden)
-        .background(AppPalette.paper)
-        .navigationTitle("Explore")
+        .background(AppBackdrop()).navigationTitle("Explore").navigationBarTitleDisplayMode(.inline)
     }
 }
 
 struct JungQuotesScreen: View {
     @EnvironmentObject private var store: DeckStore
-    @State private var selectedQuoteID: String?
-
-    private var currentQuote: JungQuote? {
-        if let selectedQuoteID, let quote = store.jungQuotes.first(where: { $0.id == selectedQuoteID }) {
-            return quote
-        }
-        return store.jungQuotes.first
+    @State private var selectedEntryID: String?
+    private var currentEntry: JungEntry? {
+        if let selectedEntryID, let entry = store.jungEntries.first(where: { $0.id == selectedEntryID }) { return entry }
+        return store.jungEntries.first
     }
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Text("JUNG / RANDOM QUOTE")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .tracking(2)
-                    .foregroundStyle(AppPalette.sage)
-                Text("A thought to sit with")
-                    .font(.system(.title2, design: .rounded, weight: .semibold))
-                    .foregroundStyle(AppPalette.ink)
-                Text("Take what fits. Leave the rest. You can draw another quote whenever you want.")
-                    .font(.body)
-                    .foregroundStyle(AppPalette.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if let quote = currentQuote {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("“")
-                            .font(.system(size: 54, weight: .medium, design: .serif))
-                            .foregroundStyle(AppPalette.sage)
-                            .accessibilityHidden(true)
-                        Text(quote.text)
-                            .font(.system(.title2, design: .rounded, weight: .medium))
-                            .lineSpacing(5)
-                            .foregroundStyle(AppPalette.ink)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Rectangle()
-                            .fill(AppPalette.line)
-                            .frame(height: 1)
-                        Text(quote.source)
-                            .font(.footnote)
-                            .foregroundStyle(AppPalette.muted)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(22)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(AppPalette.card, in: RoundedRectangle(cornerRadius: 22))
-                    .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppPalette.line, lineWidth: 1))
-
-                    HStack(spacing: 12) {
-                        Button(action: drawAnother) {
-                            Label("Another quote", systemImage: "arrow.clockwise")
-                                .frame(maxWidth: .infinity, minHeight: 48)
+                Text("Jung // signal").font(.system(size: 12, weight: .bold, design: .monospaced)).tracking(2).foregroundStyle(AppPalette.sage)
+                Text("A thought to sit with").font(.system(size: 25, weight: .semibold, design: .rounded)).foregroundStyle(AppPalette.ink)
+                Text("Take what fits. Leave the rest. Randomise another entry whenever you want.")
+                    .font(.system(size: 15, design: .rounded)).lineSpacing(3).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
+                if let entry = currentEntry {
+                    VStack(alignment: .leading, spacing: 15) {
+                        Text(entry.kindLabel).font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.4).foregroundStyle(AppPalette.sage)
+                        Text("“").font(.system(size: 54, weight: .medium, design: .serif)).foregroundStyle(AppPalette.sage).accessibilityHidden(true)
+                        Text(entry.text).font(.system(size: 24, weight: .medium, design: .rounded)).lineSpacing(5).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
+                        Rectangle().fill(AppPalette.line).frame(height: 1)
+                        Text(entry.citation).font(.system(size: 13, design: .rounded)).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
+                        if let url = URL(string: entry.url) {
+                            Link(entry.label ?? "Open source notes", destination: url).font(.system(size: 13, weight: .medium, design: .rounded)).tint(AppPalette.sage)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .tint(AppPalette.sage)
-                        .foregroundStyle(AppPalette.paper)
-
-                        QuoteShareButton(quote: quote)
+                    }
+                    .padding(22).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(AppPalette.card, in: RoundedRectangle(cornerRadius: 20))
+                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(AppPalette.line, lineWidth: 1))
+                    HStack(spacing: 10) {
+                        Button(action: drawAnother) {
+                            Label("Randomise quote", systemImage: "arrow.clockwise").frame(maxWidth: .infinity, minHeight: 48)
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
+                        QuoteShareButton(quote: entry)
                     }
                 } else {
-                    EmptyState(
-                        title: "No quotes loaded",
-                        message: store.jungQuotesLoadError ?? "The quote collection is not available in this build."
-                    )
-                    .padding(.top, 8)
+                    EmptyState(title: "No Jung entries loaded", message: store.jungQuotesLoadError ?? store.jungReflectionsLoadError ?? "The Jung // signal collection is not available in this build.")
                 }
-
-                Text("These excerpts are for reflection, not instructions, diagnoses, or clinical advice.")
-                    .font(.footnote)
-                    .foregroundStyle(AppPalette.muted)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text("A mix of sourced quotations and original paraphrases inspired by Jungian psychology. Paraphrases are not Jung’s exact words or clinical interpretations.")
+                    .font(.system(size: 12, design: .rounded)).lineSpacing(3).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
             }
-            .padding(20)
-            .frame(maxWidth: 620, alignment: .leading)
-            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20).frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity).padding(.horizontal, 20)
         }
-        .background(AppPalette.paper.ignoresSafeArea())
-        .navigationTitle("Jung")
-        .onAppear {
-            if selectedQuoteID == nil { selectedQuoteID = store.jungQuotes.randomElement()?.id }
-        }
+        .background(AppBackdrop()).navigationTitle("Jung").navigationBarTitleDisplayMode(.inline)
+        .onAppear { if selectedEntryID == nil { selectedEntryID = store.jungEntries.randomElement()?.id } }
     }
-
     private func drawAnother() {
-        let alternatives = store.jungQuotes.filter { $0.id != currentQuote?.id }
-        selectedQuoteID = (alternatives.isEmpty ? store.jungQuotes : alternatives).randomElement()?.id
+        let entries = store.jungEntries
+        let alternatives = entries.filter { $0.id != currentEntry?.id }
+        selectedEntryID = (alternatives.isEmpty ? entries : alternatives).randomElement()?.id
     }
 }
 
@@ -406,39 +362,50 @@ struct AreaCardsScreen: View {
 struct SourceDeckDetailScreen: View {
     let deck: SourceDeck
     @EnvironmentObject private var store: DeckStore
-
+    @Environment(\.dismiss) private var dismiss
+    @State private var currentCardID: String?
+    @State private var seenIDs = Set<String>()
+    private var deckCards: [CardItem] { store.cards(for: deck) }
+    private var currentCard: CardItem? { deckCards.first { $0.id == currentCardID } }
     var body: some View {
-        List {
-            Section {
-                Text(deck.description)
-                    .font(.system(size: 15, design: .rounded))
-                    .foregroundStyle(AppPalette.ink)
-                    .listRowBackground(AppPalette.card)
-                Text("By \(deck.author)")
-                    .font(.system(size: 14, design: .rounded))
-                    .foregroundStyle(AppPalette.muted)
-                    .listRowBackground(AppPalette.card)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Button { dismiss() } label: {
+                    Label("All collections", systemImage: "chevron.left").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(AppPalette.sage)
+                }.buttonStyle(.plain).accessibilityHint("Returns to the collection list")
+                Text("SOURCE LIBRARY · \(deck.area.uppercased()) · \(deck.cards.count) CARDS")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.3).foregroundStyle(AppPalette.sage).fixedSize(horizontal: false, vertical: true)
+                Text(deck.title).font(.system(size: 27, weight: .bold, design: .rounded)).tracking(-0.5).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
+                Text(deck.description).font(.system(size: 15, design: .rounded)).lineSpacing(3).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
+                Text("By \(deck.author)").font(.system(size: 13, design: .rounded)).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
                 if let url = URL(string: deck.source) {
-                    Link("Open the original deck", destination: url)
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .listRowBackground(AppPalette.card)
+                    Link("Open the original collection", destination: url).font(.system(size: 13, weight: .medium, design: .rounded)).tint(AppPalette.sage)
                 }
-            }
-            Section("Prompts") {
-                ForEach(store.cards(for: deck)) { card in
-                    NavigationLink {
-                        CardDetailScreen(card: card)
-                    } label: {
-                        CardRow(card: card)
-                    }
-                    .listRowBackground(AppPalette.card)
+                Button(action: drawFromDeck) {
+                    Label("Draw from this deck", systemImage: "arrow.clockwise").frame(maxWidth: .infinity, minHeight: 50)
+                }.buttonStyle(PrimaryButtonStyle()).accessibilityHint("Draws one random card from \(deck.title)")
+                if let card = currentCard {
+                    CardPanel(card: card)
+                    HStack(spacing: 10) { SaveCardButton(card: card); ShareCardButton(card: card) }
+                } else if !deckCards.isEmpty {
+                    EmptyState(title: "Choose a card", message: "Tap “Draw from this deck” to draw a prompt.")
+                } else {
+                    EmptyState(title: "No cards in this collection", message: "Return to the collection list and choose another deck.")
                 }
+                Text("Draw one at a time. Skip freely, or return to all collections whenever you want.")
+                    .font(.system(size: 12, design: .rounded)).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.vertical, 20).frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity).padding(.horizontal, 20)
         }
-        .scrollContentBackground(.hidden)
-        .background(AppPalette.paper)
-        .navigationTitle(deck.title)
-        .navigationBarTitleDisplayMode(.inline)
+        .background(AppBackdrop()).navigationTitle(deck.title).navigationBarTitleDisplayMode(.inline)
+        .onAppear { if currentCardID == nil { drawFromDeck() } }
+    }
+    private func drawFromDeck() {
+        var choices = deckCards.filter { !seenIDs.contains($0.id) }
+        if choices.isEmpty { seenIDs.removeAll(); choices = deckCards }
+        guard let card = choices.randomElement() else { currentCardID = nil; return }
+        currentCardID = card.id
+        seenIDs.insert(card.id)
     }
 }
 
@@ -466,7 +433,7 @@ struct SavedScreen: View {
                 .scrollContentBackground(.hidden)
             }
         }
-        .background(AppPalette.paper)
+        .background(AppBackdrop())
         .navigationTitle("Saved cards")
     }
 }
@@ -485,7 +452,7 @@ struct CardDetailScreen: View {
             }
             .padding(20)
         }
-        .background(AppPalette.paper.ignoresSafeArea())
+        .background(AppBackdrop())
         .navigationTitle(card.category.localizedCapitalized)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -617,23 +584,18 @@ struct SaveCardButton: View {
 }
 
 struct QuoteShareButton: View {
-    let quote: JungQuote
+    let quote: JungEntry
     @State private var showingShare = false
     @State private var activityItems: [Any] = []
-
     var body: some View {
         Button(action: prepareShare) {
-            Label("Share", systemImage: "square.and.arrow.up")
-                .frame(maxWidth: .infinity, minHeight: 48)
+            Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity, minHeight: 48)
         }
-        .buttonStyle(.bordered)
-        .tint(AppPalette.sage)
+        .buttonStyle(.bordered).tint(AppPalette.sage)
         .sheet(isPresented: $showingShare) {
-            ActivityView(activityItems: activityItems)
-                .presentationDetents([.medium, .large])
+            ActivityView(activityItems: activityItems).presentationDetents([.medium, .large])
         }
     }
-
     private func prepareShare() {
         let renderer = ImageRenderer(content: QuoteShareArtwork(quote: quote))
         renderer.scale = 3
@@ -642,35 +604,18 @@ struct QuoteShareButton: View {
         showingShare = true
     }
 }
-
 struct QuoteShareArtwork: View {
-    let quote: JungQuote
-
+    let quote: JungEntry
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            Text("SHROOK · JUNG QUOTES")
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                .tracking(1.5)
-                .foregroundStyle(AppPalette.sage)
-            Text("“")
-                .font(.system(size: 46, weight: .medium, design: .serif))
-                .foregroundStyle(AppPalette.sage)
-            Text(quote.text)
-                .font(.system(size: 21, weight: .medium, design: .rounded))
-                .lineSpacing(4)
-                .foregroundStyle(AppPalette.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            Rectangle()
-                .fill(AppPalette.line)
-                .frame(height: 1)
-            Text(quote.source)
-                .font(.system(size: 11, design: .rounded))
-                .foregroundStyle(AppPalette.muted)
-                .fixedSize(horizontal: false, vertical: true)
+            Text("SHROOK · JUNG // SIGNAL").font(.system(size: 11, weight: .bold, design: .monospaced)).tracking(1.5).foregroundStyle(AppPalette.sage)
+            Text(quote.kindLabel).font(.system(size: 9, weight: .bold, design: .monospaced)).tracking(1.2).foregroundStyle(AppPalette.sage)
+            Text("“").font(.system(size: 46, weight: .medium, design: .serif)).foregroundStyle(AppPalette.sage)
+            Text(quote.text).font(.system(size: 21, weight: .medium, design: .rounded)).lineSpacing(4).foregroundStyle(AppPalette.ink).fixedSize(horizontal: false, vertical: true)
+            Rectangle().fill(AppPalette.line).frame(height: 1)
+            Text(quote.citation).font(.system(size: 11, design: .rounded)).foregroundStyle(AppPalette.muted).fixedSize(horizontal: false, vertical: true)
         }
-        .padding(28)
-        .frame(width: 360, alignment: .leading)
-        .background(AppPalette.paper)
+        .padding(28).frame(width: 360, alignment: .leading).background(AppPalette.paper)
     }
 }
 
@@ -782,7 +727,7 @@ struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 16, weight: .semibold, design: .rounded))
-            .foregroundStyle(.white)
+            .foregroundStyle(AppPalette.paper)
             .padding(.vertical, 15)
             .background(configuration.isPressed ? AppPalette.sageDark : AppPalette.sage,
                         in: RoundedRectangle(cornerRadius: 16))
@@ -803,7 +748,7 @@ struct AboutScreen: View {
                     Text("These are reflective prompts, not a fixed interpretation, diagnosis, or substitute for clinical care. You do not need to disclose or dig into painful memories.")
                 }
                 AboutCard(title: "About the Jung quotes") {
-                    Text("The Jung section shows one short, source-cited excerpt at a time. Sharing a quote includes its book or essay reference.")
+                    Text("Jung // signal combines six sourced quotations with 20 original Jungian-inspired paraphrases. Each entry is labeled, and sourced quotations link to their references.")
                 }
                 AboutCard(title: "Credit and privacy") {
                     Text("Optional reference prompts are adapted with permission from tools by Alora Young / NeuroScouts. Each collection links back to its source. The Care Quest PDF cover also credits SEHTLO WEBS MD.")
@@ -812,12 +757,12 @@ struct AboutScreen: View {
                             .font(.system(size: 14, weight: .medium, design: .rounded))
                             .tint(AppPalette.sage)
                     }
-                    Text("Your saved cards stay on this device. The app does not use an account or send your saved-card list anywhere.")
+                    Text("Your saved cards stay on this device. The app works offline with its bundled cards and collections, uses no account, and does not send your saved-card list anywhere.")
                 }
             }
             .padding(20)
         }
-        .background(AppPalette.paper.ignoresSafeArea())
+        .background(AppBackdrop())
         .navigationTitle("About")
     }
 }
