@@ -13,7 +13,7 @@ targets:
         buildPhase: resources
       - path: source-decks.json
         buildPhase: resources
-      - path: jung-quotes.json
+      - path: ios-jung-quotes.json
         buildPhase: resources
       - path: jung-reflections.json
         buildPhase: resources
