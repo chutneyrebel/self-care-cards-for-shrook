@@ -1,32 +1,50 @@
 [
   {
-    "id": "individual-fit",
-    "text": "The shoe that fits one person pinches another; there is no recipe for living that suits all cases.",
-    "source": "C.G. Jung, “The Aims of Psychotherapy,” Modern Man in Search of a Soul (1933), p. 69."
-  },
-  {
-    "id": "acceptance",
-    "text": "We cannot change anything unless we accept it.",
-    "source": "C.G. Jung, “Psychotherapists or the Clergy,” Psychology and Religion: West and East, Collected Works 11, §520."
-  },
-  {
-    "id": "shadow-consciousness",
+    "id": "quote-01",
+    "kind": "quote",
     "text": "One does not become enlightened by imagining figures of light, but by making the darkness conscious.",
-    "source": "C.G. Jung, “The Philosophical Tree,” Collected Works 13, §335."
+    "citation": "C. G. Jung, “The Philosophical Tree”, Alchemical Studies (CW 13), §335",
+    "url": "https://typejung.com/jung/quotes",
+    "label": "Open quote source notes"
   },
   {
-    "id": "roots-and-heights",
-    "text": "No tree, it is said, can grow to heaven unless its roots reach down to hell.",
-    "source": "C.G. Jung, Aion: Researches into the Phenomenology of the Self, Collected Works 9ii (1951), p. 43."
+    "id": "quote-02",
+    "kind": "quote",
+    "text": "The psychological rule says that when an inner situation is not made conscious, it happens outside, as fate.",
+    "citation": "C. G. Jung, “Christ, a Symbol of the Self”, Aion (CW 9ii), §126",
+    "url": "https://typejung.com/jung/quotes",
+    "label": "Open quote source notes"
   },
   {
-    "id": "cosmos-in-chaos",
-    "text": "In all chaos there is a cosmos, in all disorder a secret order.",
-    "source": "C.G. Jung, “The Archetypes and the Collective Unconscious,” Collected Works 9i, §66."
+    "id": "quote-03",
+    "kind": "quote",
+    "text": "Everyone knows nowadays that people “have complexes.” What is not so well known, though far more important theoretically, is that complexes can have us.",
+    "citation": "C. G. Jung, “A Review of the Complex Theory”, CW 8, §200",
+    "url": "https://typejung.com/jung/quotes",
+    "label": "Open quote source notes"
   },
   {
-    "id": "self-understanding",
-    "text": "Everything that irritates us about others can lead us to an understanding of ourselves.",
-    "source": "C.G. Jung, Memories, Dreams, Reflections, ch. IX, “Travels,” p. 247."
+    "id": "quote-04",
+    "kind": "quote",
+    "text": "Individuation does not shut one out from the world, but gathers the world to itself.",
+    "citation": "C. G. Jung, “On the Nature of the Psyche”, CW 8, §432",
+    "url": "https://typejung.com/jung/quotes",
+    "label": "Open quote source notes"
+  },
+  {
+    "id": "quote-05",
+    "kind": "quote",
+    "text": "The goal is important only as an idea; the essential thing is the opus which leads to the goal: that is the goal of a lifetime.",
+    "citation": "C. G. Jung, “The Psychology of the Transference”, CW 16, §400",
+    "url": "https://typejung.com/jung/quotes",
+    "label": "Open quote source notes"
+  },
+  {
+    "id": "quote-06",
+    "kind": "quote",
+    "text": "The bigger the crowd, the more negligible the individual.",
+    "citation": "C. G. Jung, The Undiscovered Self (CW 10), p. 14",
+    "url": "https://typejung.com/jung/quotes",
+    "label": "Open quote source notes"
   }
 ]
