@@ -68,6 +68,17 @@ struct CardItem: Hashable, Identifiable {
         sourceURL = deck.source
     }
 
+    init(jung entry: JungEntry) {
+        id = entry.id
+        category = "JUNG // SIGNAL"
+        title = entry.kindLabel == "VERIFIED QUOTE" ? "Jung quote" : "Jungian-inspired reflection"
+        prompt = Self.clean(entry.text)
+        reflection = ""
+        small = ""
+        sourceCredit = entry.citation
+        sourceURL = entry.url
+    }
+
     var shareText: String {
         var parts = ["\(title)\n\n\(prompt)"]
         if !small.isEmpty { parts.append("Smaller version: \(small)") }
@@ -187,10 +198,14 @@ final class DeckStore: ObservableObject {
     }
 
     func toggleSaved(_ card: CardItem) {
-        if savedIDs.contains(card.id) {
-            savedIDs.remove(card.id)
+        toggleSavedID(card.id)
+    }
+
+    func toggleSavedID(_ id: String) {
+        if savedIDs.contains(id) {
+            savedIDs.remove(id)
         } else {
-            savedIDs.insert(card.id)
+            savedIDs.insert(id)
         }
         UserDefaults.standard.set(Array(savedIDs), forKey: "savedCardIDs")
     }
