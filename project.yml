@@ -13,9 +13,13 @@ targets:
         buildPhase: resources
       - path: source-decks.json
         buildPhase: resources
-      - path: jung-quotes.json
+      - path: ios-jung-quotes.json
+        buildPhase: resources
+      - path: jung-reflections.json
         buildPhase: resources
       - path: ios/SelfCareCards/Assets.xcassets
+        buildPhase: resources
+      - path: ios/SelfCareCards/Fonts
         buildPhase: resources
     settings:
       base:
