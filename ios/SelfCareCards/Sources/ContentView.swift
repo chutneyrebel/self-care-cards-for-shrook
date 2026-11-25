@@ -803,7 +803,7 @@ struct PrivateCardNoteEditor: View {
 
     private var hasNote: Bool { !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     var body: some View {
-        DisclosureGroup(hasNote ? "Edit private note" : "Add a private note") {
+        DisclosureGroup {
             TextEditor(text: $note)
                 .frame(minHeight: 88)
                 .scrollContentBackground(.hidden)
